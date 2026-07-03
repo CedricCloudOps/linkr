@@ -32,7 +32,7 @@ jobs:
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=sha,prefix=sha-
+            type=sha,prefix=sha-,format=long
             type=ref,event=branch
             type=semver,pattern={{version}}
       - uses: docker/build-push-action@v6
