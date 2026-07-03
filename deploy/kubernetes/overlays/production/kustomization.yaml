@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: linkr
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+configMapGenerator:
+  - name: linkr-config
+    behavior: merge
+    literals:
+      - LINKR_ENV=production
+      - LINKR_BASE_URL=https://lnkr.dev
+
+patches:
+  - path: scale-and-resources.yaml
+  - path: hpa.yaml
+  - path: ingress-host.yaml

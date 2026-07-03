@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: linkr
+  labels:
+    app.kubernetes.io/name: linkr
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - linkr.example.com
+      secretName: linkr-tls
+  rules:
+    - host: linkr.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: linkr
+                port:
+                  number: 80

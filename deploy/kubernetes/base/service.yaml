@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: linkr
+  labels:
+    app.kubernetes.io/name: linkr
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: linkr
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

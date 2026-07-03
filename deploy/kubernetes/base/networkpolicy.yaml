@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: linkr
+  labels:
+    app.kubernetes.io/name: linkr
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: linkr
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # Egress to PostgreSQL, Redis and DNS. Restrict to managed-service CIDRs
+    # per environment; left open here for portability.
+    - {}
