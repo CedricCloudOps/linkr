@@ -1,0 +1,77 @@
+# SLO: 99.9% of HTTP requests succeed (non-5xx). Error budget = 0.1%.
+# Multi-window, multi-burn-rate alerting following the Google SRE workbook.
+groups:
+  - name: linkr-slo-recording
+    interval: 30s
+    rules:
+      - record: job:linkr_request_errors:ratio_rate5m
+        expr: |
+          sum(rate(linkr_http_requests_total{status=~"5.."}[5m]))
+            / sum(rate(linkr_http_requests_total[5m]))
+      - record: job:linkr_request_errors:ratio_rate30m
+        expr: |
+          sum(rate(linkr_http_requests_total{status=~"5.."}[30m]))
+            / sum(rate(linkr_http_requests_total[30m]))
+      - record: job:linkr_request_errors:ratio_rate1h
+        expr: |
+          sum(rate(linkr_http_requests_total{status=~"5.."}[1h]))
+            / sum(rate(linkr_http_requests_total[1h]))
+      - record: job:linkr_request_errors:ratio_rate6h
+        expr: |
+          sum(rate(linkr_http_requests_total{status=~"5.."}[6h]))
+            / sum(rate(linkr_http_requests_total[6h]))
+
+  - name: linkr-slo-alerts
+    rules:
+      - alert: LinkrErrorBudgetFastBurn
+        # 14.4x burn over 1h consumes 2% of the monthly budget; page immediately.
+        expr: |
+          job:linkr_request_errors:ratio_rate1h > (14.4 * 0.001)
+            and job:linkr_request_errors:ratio_rate5m > (14.4 * 0.001)
+        for: 2m
+        labels:
+          severity: page
+          service: linkr
+        annotations:
+          summary: "linkr error budget fast burn"
+          description: "5xx ratio {{ $value | humanizePercentage }} over 1h and 5m windows."
+          runbook: "docs/runbook.md#error-budget-burn"
+
+      - alert: LinkrErrorBudgetSlowBurn
+        expr: |
+          job:linkr_request_errors:ratio_rate6h > (6 * 0.001)
+            and job:linkr_request_errors:ratio_rate30m > (6 * 0.001)
+        for: 15m
+        labels:
+          severity: ticket
+          service: linkr
+        annotations:
+          summary: "linkr error budget slow burn"
+          description: "5xx ratio {{ $value | humanizePercentage }} over 6h and 30m windows."
+          runbook: "docs/runbook.md#error-budget-burn"
+
+      - alert: LinkrRedirectLatencyHigh
+        # SLO: P99 redirect latency < 50 ms.
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum(rate(linkr_http_request_duration_seconds_bucket{path="/{code}"}[5m])) by (le)
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: page
+          service: linkr
+        annotations:
+          summary: "linkr redirect P99 latency above 50ms"
+          runbook: "docs/runbook.md#redirect-latency"
+
+      - alert: LinkrInstanceDown
+        expr: up{job="linkr"} == 0
+        for: 1m
+        labels:
+          severity: page
+          service: linkr
+        annotations:
+          summary: "linkr target down"
+          description: "{{ $labels.instance }} has been unreachable for 1 minute."
+          runbook: "docs/runbook.md#instance-down"
