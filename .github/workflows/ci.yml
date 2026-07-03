@@ -90,11 +90,10 @@ jobs:
           load: true
           tags: linkr:ci
       - name: Vulnerability scan (report-only)
-        # Reports fixable HIGH/CRITICAL findings without failing the build on
-        # base-image CVEs. Set exit-code to "1" to enforce a hard gate.
-        uses: aquasecurity/trivy-action@v0.30.0
-        with:
-          image-ref: linkr:ci
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "0"
+        # Install Trivy directly to avoid brittle nested action pins.
+        # Reports fixable HIGH/CRITICAL findings; use --exit-code 1 to hard-gate.
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b "$RUNNER_TEMP/bin"
+          "$RUNNER_TEMP/bin/trivy" image --severity HIGH,CRITICAL \
+            --ignore-unfixed --exit-code 0 --no-progress linkr:ci

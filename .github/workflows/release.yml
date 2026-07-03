@@ -42,18 +42,17 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - name: Scan published image (report-only)
-        uses: aquasecurity/trivy-action@v0.30.0
-        with:
-          image-ref: ${{ env.IMAGE }}:sha-${{ github.sha }}
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "0"
-      - name: Generate SBOM
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ env.IMAGE }}:sha-${{ github.sha }}
-          format: spdx-json
-          output-file: sbom.spdx.json
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b "$RUNNER_TEMP/bin"
+          "$RUNNER_TEMP/bin/trivy" image --severity HIGH,CRITICAL \
+            --ignore-unfixed --exit-code 0 --no-progress "$IMAGE:sha-${{ github.sha }}"
+      - name: Generate SBOM (SPDX)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sh -s -- -b "$RUNNER_TEMP/bin"
+          "$RUNNER_TEMP/bin/syft" "$IMAGE:sha-${{ github.sha }}" \
+            -o spdx-json > sbom.spdx.json
       - uses: actions/upload-artifact@v4
         with:
           name: sbom
