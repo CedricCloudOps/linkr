@@ -19,5 +19,5 @@ configMapGenerator:
       - LINKR_BASE_URL=https://linkr.example.com
 
 images:
-  - name: ghcr.io/CedricCloudOps/linkr
+  - name: ghcr.io/cedriccloudops/linkr
     newTag: latest

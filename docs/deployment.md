@@ -19,7 +19,7 @@ approval before it runs.
 
 ## Images
 Immutable, tagged by semantic version and commit SHA
-(`ghcr.io/CedricCloudOps/linkr:1.0.0`, `:sha-<commit>`). `latest` is never
+(`ghcr.io/cedriccloudops/linkr:1.0.0`, `:sha-<commit>`). `latest` is never
 deployed.
 
 ## Kubernetes (Kustomize)
